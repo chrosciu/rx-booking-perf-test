@@ -12,6 +12,6 @@ public class BookingController {
 
     @PostMapping("/booking")
     public String book(@RequestParam(value = "destination") String destination) {
-        return bookingService.book(destination);
+        return bookingService.book(destination).block();
     }
 }

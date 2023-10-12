@@ -1,8 +1,10 @@
 package com.chrosciu.booking;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 @Service
 @Slf4j
@@ -12,18 +14,20 @@ public class BookingService {
         BACK
     }
 
-    public String book(String destination) {
-        return String.join("\n",
-            book(destination, TripType.THERE),
-            book(destination, TripType.BACK)
+    public Mono<String> book(String destination) {
+        return Mono.zip(
+                book(destination, TripType.THERE),
+                book(destination, TripType.BACK),
+                (there, back) -> String.join("\n", there, back)
         );
     }
 
-    @SneakyThrows
-    private String book(String destination, TripType tripType) {
-        log.info("[{} {}] Booking start", destination, tripType);
-        Thread.sleep(3000);
-        log.info("[{} {}] Booking end", destination, tripType);
-        return String.format("Booked %s travel to:  %s", tripType, destination);
+    private Mono<String> book(String destination, TripType tripType) {
+        return Mono.fromCallable(() -> destination)
+                .doOnNext(s -> log.info("[{} {}] Booking start", destination, tripType))
+                .delayElement(Duration.ofSeconds(6))
+                .map(d -> String.format("Booked %s travel to: %s", tripType, d))
+                .doOnNext(s -> log.info("[{} {}] Booking end", destination, tripType));
     }
+
 }
